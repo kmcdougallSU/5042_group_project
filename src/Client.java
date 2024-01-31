@@ -1,3 +1,5 @@
+package src;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -20,26 +22,7 @@ public class Client {
         //create print writer for sending login to server
         output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-        // Create a Scanner object
-        Scanner myObj = new Scanner(System.in);
-
-        // Prompt for username
-        System.out.print("Enter username: ");
-
-        // Read user input
-        String username = myObj.nextLine();
-
-        //send username to server
-        output.println(username);
-
-        //prompt for password
-        System.out.print("Enter password: ");
-
-        String password = myObj.nextLine();
-
-        //send password to server
-        output.println(password);
-        output.flush();
+        showMenu();
 
         //create Buffered reader for reading response from server
         read = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -67,19 +50,40 @@ public class Client {
 
         System.out.println("---Menu---");
         System.out.println("""
-                    1. Logout
+                    1. Login
+                    2. Logout
                     """);
 
         int menuOption;
         do {
             System.out.print("Enter the menu option: ");
             menuOption = scanner.nextInt();
-            if (menuOption != 1)
+            if (menuOption != 1 && menuOption != 2)
             {
                 System.out.println("Menu option is invalid.");
             }
-        } while (menuOption != 1);
+        } while (menuOption != 1 && menuOption != 2);
 
+        // Create a Scanner object
+        Scanner myObj = new Scanner(System.in);
+
+        // Prompt for username
+        System.out.print("Enter username: ");
+
+        // Read user input
+        String username = myObj.nextLine();
+
+        //send username to server
+        output.println(username);
+
+        //prompt for password
+        System.out.print("Enter password: ");
+
+        String password = myObj.nextLine();
+
+        //send password to server
+        output.println(password);
+        output.flush();
         output.println(menuOption);
     }
 

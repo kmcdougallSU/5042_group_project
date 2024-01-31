@@ -1,3 +1,5 @@
+package src;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -55,6 +57,8 @@ public class Server {
         int menuOption = input.read();
         if (menuOption == 1)
         {
+            login();
+        } else if (menuOption == 2) {
             logout();
         }
     }

@@ -1,5 +1,3 @@
-package src;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -21,7 +19,7 @@ public class Server {
 
     public void doSignup() {
         userPassword = new HashMap<>();
-        userPassword.put("u1", "p1");
+        userPassword.put("User1", "Password1");
         userPassword.put("User2", "Password2");
         userPassword.put("User3", "Password3");
         userPassword.put("User4", "Password4");
@@ -30,7 +28,7 @@ public class Server {
     public void start() throws IOException {
         doSignup();
         serversocket = new ServerSocket(12345);
-        System.out.println("Connection Starting on port: " + serversocket.getLocalPort());
+        System.out.println("Connection Starting on port:" + serversocket.getLocalPort());
 
         while (true) {
             //accept connection from client
@@ -56,9 +54,6 @@ public class Server {
         login();
         int menuOption = input.read();
         if (menuOption == 1)
-        {
-            login();
-        } else if (menuOption == 2)
         {
             logout();
         }

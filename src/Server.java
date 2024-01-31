@@ -29,7 +29,7 @@ public class Server implements AutoCloseable {
 
     public void start() throws IOException {
         serversocket = new ServerSocket(12345);
-        System.out.println("Connection Starting on port:" + serversocket.getLocalPort());
+        System.out.println("SERVER> Connection Starting on port:" + serversocket.getLocalPort());
 
         while (true) {
             //accept connection from client
@@ -41,7 +41,7 @@ public class Server implements AutoCloseable {
             //open print writer for writing data to client
             output = new PrintWriter(new OutputStreamWriter(client.getOutputStream()), true);
 
-            System.out.println("Waiting for connection from client");
+            System.out.println("SERVER> Waiting for connection from client");
 
             try {
                 process();
@@ -69,19 +69,19 @@ public class Server implements AutoCloseable {
 
     public void login() throws IOException {
         String username = input.readLine();
-        System.out.println("username: " + username);
+        System.out.println("SERVER> username: " + username);
 
         String password = input.readLine();
-        System.out.println("password: " + password);
+        System.out.println("SERVER> password: " + password);
 
         if (userPassword.containsKey(username) && password.equals(userPassword.get(username))) {
             output.println(STATUS.SUCCESS.ordinal());
-            output.println("Welcome, " + username); // Send the welcome message to the client
+            output.println("USER> Welcome, " + username); // Send the welcome message to the client
             loggedInUser = username;
-            System.out.println(loggedInUser + " connected");
+            System.out.println("SERVER> " + loggedInUser + " connected");
         } else {
             output.println(STATUS.FAIL.ordinal());
-            output.println("Login Failed");
+            output.println("USER> Login Failed");
         }
         output.flush();
 
@@ -89,15 +89,15 @@ public class Server implements AutoCloseable {
 
     public void logout() throws IOException {
         if (loggedInUser != null && !loggedInUser.isEmpty()) {
-            output.println("Logging out: " + loggedInUser);
-            System.out.println(loggedInUser + " disconnected");
-            output.println("Logout successful. Goodbye, " + loggedInUser + "!");
+            output.println("USER> Logging out: " + loggedInUser);
+            System.out.println("SERVER> " + loggedInUser + " disconnected");
+            output.println("USER> Logout successful. Goodbye, " + loggedInUser + "!");
             loggedInUser = null;
         } else {
-            output.println("No user is currently logged in.");
-            output.println("Logout failed. No user was logged in.");
+            output.println("USER> No user is currently logged in.");
+            output.println("USER> Logout failed. No user was logged in.");
         }
-        output.println("END_OF_MESSAGE");
+        output.println("USER> END_OF_MESSAGE");
         output.flush();
     }
 

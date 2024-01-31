@@ -21,11 +21,11 @@ public class Client implements AutoCloseable {
 
         Scanner myObj = new Scanner(System.in);
 
-        System.out.print("Welcome...\nPlease enter your username: ");
+        System.out.print("Welcome...\nUSER> Please enter your username: ");
         String username = myObj.nextLine();
         output.println(username);
 
-        System.out.print("Enter password: ");
+        System.out.print("USER> Enter password: ");
         String password = myObj.nextLine();
         output.println(password);
         output.flush();
@@ -40,7 +40,7 @@ public class Client implements AutoCloseable {
         if (errorCode == STATUS.SUCCESS.ordinal()) {
             showMenu();
         } else {
-            System.out.println("Please try again.");
+            System.out.println("USER> Please try again.");
         }
 
     }
@@ -54,14 +54,14 @@ public class Client implements AutoCloseable {
 
         int menuOption;
         do {
-            System.out.print("Enter the menu option: ");
+            System.out.print("USER> Enter the menu option: ");
             while (!scanner.hasNextInt()) {
-                System.out.println("Menu option is invalid");
+                System.out.println("USER> Menu option is invalid");
                 scanner.next();
             }
             menuOption = scanner.nextInt();
             if (menuOption != 1) {
-                System.out.println("Menu option is invalid.");
+                System.out.println("USER> Menu option is invalid.");
             }
         } while (menuOption != 1);
 
@@ -75,9 +75,16 @@ public class Client implements AutoCloseable {
         output.flush();
 
         String serverMessage;
-        while (!(serverMessage = read.readLine()).equals("END_OF_MESSAGE")) {
+        while (true) {
+            serverMessage = read.readLine();
+            if (serverMessage == null || serverMessage.equals("END_OF_MESSAGE")) {
+                break;
+            }
             System.out.println(serverMessage);
         }
+
+        // Close client resources here, if you're done with the connection
+        close();
     }
 
     public static void main(String[] args) {

@@ -1,15 +1,17 @@
+package src;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Server {
+public class Server implements AutoCloseable {
     enum STATUS {
         SUCCESS,
-        FAIL,
+        FAIL
     }
+
     Map<String, String> userPassword;
     ServerSocket serversocket;
     Socket client;
@@ -17,7 +19,7 @@ public class Server {
     PrintWriter output;
     String loggedInUser;
 
-    public void doSignup() {
+    public Server() {
         userPassword = new HashMap<>();
         userPassword.put("User1", "Password1");
         userPassword.put("User2", "Password2");
@@ -26,7 +28,6 @@ public class Server {
     }
 
     public void start() throws IOException {
-        doSignup();
         serversocket = new ServerSocket(12345);
         System.out.println("Connection Starting on port:" + serversocket.getLocalPort());
 
@@ -38,7 +39,7 @@ public class Server {
             input = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
             //open print writer for writing data to client
-            output = new PrintWriter(new OutputStreamWriter(client.getOutputStream()));
+            output = new PrintWriter(new OutputStreamWriter(client.getOutputStream()), true);
 
             System.out.println("Waiting for connection from client");
 
@@ -46,51 +47,79 @@ public class Server {
                 process();
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                if (client != null) {
+                    client.close();
+                }
             }
         }
     }
 
     public void process() throws IOException {
         login();
-        int menuOption = input.read();
-        if (menuOption == 1)
-        {
-            logout();
+        while (true) { // Loop to handle multiple requests
+            String menuOptionStr = input.readLine(); // Read the line
+            int menuOption = Integer.parseInt(menuOptionStr.trim()); // Convert to int
+            if (menuOption == 1) {
+                logout();
+                break;
+            }
         }
     }
 
     public void login() throws IOException {
-
         String username = input.readLine();
         System.out.println("username: " + username);
 
         String password = input.readLine();
         System.out.println("password: " + password);
 
-        if(userPassword.containsKey(username) && password.equals(userPassword.get(username)))
-        {
-            output.print(STATUS.SUCCESS.ordinal());
-            output.println("Welcome, " + username + "\n");
+        if (userPassword.containsKey(username) && password.equals(userPassword.get(username))) {
+            output.println(STATUS.SUCCESS.ordinal());
+            output.println("Welcome, " + username); // Send the welcome message to the client
             loggedInUser = username;
-        }
-        else
-        {
-            output.print(STATUS.FAIL.ordinal());
+            System.out.println(loggedInUser + " connected");
+        } else {
+            output.println(STATUS.FAIL.ordinal());
             output.println("Login Failed");
         }
         output.flush();
+
     }
 
     public void logout() throws IOException {
-        // TODO
+        if (loggedInUser != null && !loggedInUser.isEmpty()) {
+            output.println("Logging out: " + loggedInUser);
+            System.out.println(loggedInUser + " disconnected");
+            output.println("Logout successful. Goodbye, " + loggedInUser + "!");
+            loggedInUser = null;
+        } else {
+            output.println("No user is currently logged in.");
+            output.println("Logout failed. No user was logged in.");
+        }
+        output.println("END_OF_MESSAGE");
+        output.flush();
     }
 
+
     public static void main(String[] args) {
-        Server server = new Server();
-        try {
+        try (Server server = new Server()) {
             server.start();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (serversocket != null) {
+            serversocket.close();
+        }
+        if (input != null) {
+            input.close();
+        }
+        if (output != null) {
+            output.close();
         }
     }
 }

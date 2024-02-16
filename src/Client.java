@@ -6,95 +6,120 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Client implements AutoCloseable {
-    enum STATUS {
-        SUCCESS,
-        FAIL
-    }
-
     Socket socket;
     BufferedReader read;
     PrintWriter output;
+    Scanner scanner = new Scanner(System.in);
+    boolean loggedIn = false;
 
     public void startClient() throws IOException {
         socket = new Socket("localhost", 12345);
         output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-
-        Scanner myObj = new Scanner(System.in);
-
-        System.out.print("Welcome...\nUSER> Please enter your username: ");
-        String username = myObj.nextLine();
-        output.println(username);
-
-        System.out.print("USER> Enter password: ");
-        String password = myObj.nextLine();
-        output.println(password);
-        output.flush();
-
         read = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        String statusCodeStr = read.readLine(); // Read the status code as a string
-        int errorCode = Integer.parseInt(statusCodeStr.trim()); // Convert to int
-        String response = read.readLine(); // Read the response message
-        System.out.println("\n" + response);
+        showMenu();
+    }
 
-        if (errorCode == STATUS.SUCCESS.ordinal()) {
-            showMenu();
+    public void login() throws IOException {
+        if(loggedIn) {
+            System.out.println("USER> You are already logged in.");
         } else {
-            System.out.println("USER> Please try again.");
-        }
+            System.out.print("Welcome...\nUSER> Please enter your username: ");
+            String username = scanner.nextLine();
+            System.out.print("USER> Enter password: ");
+            String password = scanner.nextLine();
 
+            // Send login credentials to server
+            output.println(username);
+            output.println(password);
+            output.flush();
+
+            // Receive status from server
+            String status = read.readLine();
+            if (status.equals("0")) {
+                loggedIn = true;
+            }
+            String response = read.readLine();
+            System.out.println(response);
+        }
+        showMenu();
     }
 
     public void showMenu() throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("---Menu---");
-        System.out.println("""
-                1. Logout
-                """);
 
-        int menuOption;
-        do {
-            System.out.print("USER> Enter the menu option: ");
-            while (!scanner.hasNextInt()) {
-                System.out.println("USER> Menu option is invalid");
-                scanner.next();
-            }
-            menuOption = scanner.nextInt();
-            if (menuOption != 1) {
-                System.out.println("USER> Menu option is invalid.");
-            }
-        } while (menuOption != 1);
-
-        output.println(menuOption);
-        output.flush();
-
-        String logoutResponse = read.readLine(); // Read logout response from the server
-        System.out.println(logoutResponse);
-
-        output.println(menuOption);
-        output.flush();
-
-        String serverMessage;
         while (true) {
-            serverMessage = read.readLine();
-            if (serverMessage == null || serverMessage.equals("END_OF_MESSAGE")) {
-                break;
-            }
-            System.out.println(serverMessage);
-        }
+            System.out.println("\n---Menu---");
+            System.out.println("1. Login");
+            System.out.println("2. Create File");
+            System.out.println("3. Share File");
+            System.out.println("4. Delete File");
+            System.out.println("5. Logout\n");
 
-        // Close client resources here, if you're done with the connection
-        close();
+            int menuOption;
+            do {
+                System.out.print("USER> Enter the menu option: ");
+                while (!scanner.hasNextInt()) {
+                    System.out.println("USER> Menu option is invalid");
+                    scanner.nextLine();
+                    System.out.print("USER> Enter the menu option: ");
+
+                }
+                menuOption = scanner.nextInt();
+
+                // After reading the int, read the new line
+                scanner.nextLine();
+                if (menuOption < 1 || menuOption > 5) {
+                    System.out.println("USER> Menu option is invalid.");
+                }
+            } while (menuOption < 1 || menuOption > 5);
+
+            output.println(menuOption);
+            output.flush();
+
+            switch (menuOption) {
+                case 1:
+                    login();
+                    break;
+                case 2:
+                    createFile();
+                    break;
+                case 3:
+                    shareFile();
+                    break;
+                case 4:
+                    deleteFile();
+                    break;
+                case 5:
+                    logout();
+                    break;
+            }
+        }
     }
 
-    public static void main(String[] args) {
-        try (Client client = new Client()) {
-            client.startClient();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void createFile() throws IOException {
+        //TODO
+    }
+
+    public void shareFile() throws IOException {
+        // TODO
+    }
+
+    public void deleteFile() throws IOException {
+        //TODO
+    }
+
+    public void logout() throws IOException {
+
+        // Receive status from server
+        String status = read.readLine();
+        String response = read.readLine();
+        if (status.equals("0")) {
+            loggedIn = false;
         }
+        System.out.println(response);
+
+        // We can also exit the program here.
+        showMenu();
     }
 
     @Override
@@ -109,4 +134,16 @@ public class Client implements AutoCloseable {
             output.close();
         }
     }
+
+    public static void main(String[] args) {
+        try (Client client = new Client()) {
+            client.startClient();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+
+

@@ -13,6 +13,8 @@ public class Server implements AutoCloseable {
     // Thread class to handle client connections
     class ClientHandler implements Runnable {
         Socket client;
+        String loggedInUser;
+
         BufferedReader input;
         PrintWriter output;
 
@@ -140,7 +142,6 @@ public class Server implements AutoCloseable {
     Map<String, String> userPassword;
     ServerSocket serversocket;
     GlobalContext globalContext;
-    String loggedInUser;
     int port;
 
     public Server(int port, int max_threads) {

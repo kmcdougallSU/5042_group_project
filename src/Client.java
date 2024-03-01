@@ -5,6 +5,14 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
+/*
+    test the edge cases of multi-user login/logout
+    currently able to log in to a second account using the same credentials
+        - ex: I was able to join the server as a fresh client, and login to
+          User1's account using their credentials. Even though he was already logged in
+          and we the clients had unique socket ports
+
+ */
 public class Client implements AutoCloseable {
     Socket socket;
     BufferedReader read;
@@ -46,7 +54,6 @@ public class Client implements AutoCloseable {
     }
 
     public void showMenu() throws IOException {
-
         while (true) {
             System.out.println("\n---Menu---");
             System.out.println("1. Login");
@@ -62,7 +69,6 @@ public class Client implements AutoCloseable {
                     System.out.println("USER> Menu option is invalid");
                     scanner.nextLine();
                     System.out.print("USER> Enter the menu option: ");
-
                 }
                 menuOption = scanner.nextInt();
 
@@ -97,8 +103,17 @@ public class Client implements AutoCloseable {
     }
 
     public void createFile() throws IOException {
-        //TODO
+        if (!loggedIn) {
+            System.out.println("USER> You must be logged in to create a file.");
+            return;
+        }
+        System.out.print("USER> Enter the name of the file to create: ");
+        String filename = scanner.nextLine();
+        output.println(filename);
+        String response = read.readLine();
+        System.out.println("SERVER> " + response);
     }
+
 
     public void shareFile() throws IOException {
         // TODO

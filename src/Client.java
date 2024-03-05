@@ -5,14 +5,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-/*
-    test the edge cases of multi-user login/logout
-    currently able to log in to a second account using the same credentials
-        - ex: I was able to join the server as a fresh client, and login to
-          User1's account using their credentials. Even though he was already logged in
-          and we the clients had unique socket ports
 
- */
 public class Client implements AutoCloseable {
     Socket socket;
     BufferedReader read;
@@ -29,29 +22,35 @@ public class Client implements AutoCloseable {
     }
 
     public void login() throws IOException {
-        if(loggedIn) {
+        if (loggedIn) {
             System.out.println("USER> You are already logged in.");
-        } else {
-            System.out.print("Welcome...\nUSER> Please enter your username: ");
-            String username = scanner.nextLine();
-            System.out.print("USER> Enter password: ");
-            String password = scanner.nextLine();
-
-            // Send login credentials to server
-            output.println(username);
-            output.println(password);
-            output.flush();
-
-            // Receive status from server
-            String status = read.readLine();
-            if (status.equals("0")) {
-                loggedIn = true;
-            }
-            String response = read.readLine();
-            System.out.println(response);
+            return;
         }
-        showMenu();
+
+        System.out.print("Welcome...\nUSER> Please enter your username: ");
+        String username = scanner.nextLine();
+        System.out.print("USER> Enter password: ");
+        String password = scanner.nextLine();
+
+        // Send login credentials to server
+        output.println(username);
+        output.println(password);
+
+        // Receive status from server
+        String status = read.readLine();
+        if ("0".equals(status)) {
+            loggedIn = true;
+            String response = read.readLine(); // Expecting the welcome message after the status line
+            System.out.println(response);
+
+            System.out.println("\nPress enter to continue...");
+            scanner.nextLine(); // This waits for the user to press Enter, which can pause the flow unnecessarily. Consider removing if not needed.
+        } else {
+            String response = read.readLine(); // This reads the failure message.
+            System.out.println(response); // Show why login failed.
+        }
     }
+
 
     public void showMenu() throws IOException {
         while (true) {
@@ -60,7 +59,8 @@ public class Client implements AutoCloseable {
             System.out.println("2. Create File");
             System.out.println("3. Share File");
             System.out.println("4. Delete File");
-            System.out.println("5. Logout\n");
+            System.out.println("5. Logout");
+            System.out.println("6. List Files\n");
 
             int menuOption;
             do {
@@ -74,10 +74,10 @@ public class Client implements AutoCloseable {
 
                 // After reading the int, read the new line
                 scanner.nextLine();
-                if (menuOption < 1 || menuOption > 5) {
+                if (menuOption < 1 || menuOption > 6) {
                     System.out.println("USER> Menu option is invalid.");
                 }
-            } while (menuOption < 1 || menuOption > 5);
+            } while (menuOption < 1 || menuOption > 6);
 
             output.println(menuOption);
             output.flush();
@@ -98,6 +98,9 @@ public class Client implements AutoCloseable {
                 case 5:
                     logout();
                     break;
+                case 6:
+                    listFiles();
+                    break;
             }
         }
     }
@@ -114,13 +117,56 @@ public class Client implements AutoCloseable {
         System.out.println("SERVER> " + response);
     }
 
+    public void listFiles() throws IOException {
+        if (!loggedIn) {
+            System.out.println("USER> You must be logged in to view files");
+            return;
+        }
 
+        while (true) {
+            String response = read.readLine();
+            if ("END_OF_LIST".equals(response)) {
+                break;
+            }
+            System.out.println("SERVER> " + response);
+        }
+    }
     public void shareFile() throws IOException {
-        // TODO
+        if (!loggedIn) {
+            System.out.println("USER> Please login");
+            return;
+        } else {
+            System.out.print("USER> Enter filename to share: ");
+            String sharedFile = scanner.nextLine();
+            System.out.print("USER> Enter recipient username: ");
+            String fileDestination = scanner.nextLine();
+
+            output.println(sharedFile);
+            output.println(fileDestination);
+            output.flush();
+
+            String status = read.readLine();
+            if (status.equals("0")) {
+                if ("0".equals(status)) {
+                    System.out.println("File shared successfully");
+                } else {
+                    System.out.println("Failed to share file");
+                }
+            }
+        }
+        showMenu();
     }
 
     public void deleteFile() throws IOException {
-        //TODO
+        if (!loggedIn) {
+            System.out.println("USER> You must be logged in to delete a file");
+            return;
+        }
+        System.out.print("USER> Enter name of file to delete: ");
+        String filename = scanner.nextLine();
+        output.println(filename);
+        String response = read.readLine();
+        System.out.println("SERVER> " + response);
     }
 
     public void logout() throws IOException {
@@ -148,6 +194,7 @@ public class Client implements AutoCloseable {
         if (output != null) {
             output.close();
         }
+        System.out.println("todo: disconnect");
     }
 
     public static void main(String[] args) {
@@ -160,5 +207,3 @@ public class Client implements AutoCloseable {
         }
     }
 }
-
-

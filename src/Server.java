@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 public class Server implements AutoCloseable {
 
@@ -51,12 +53,15 @@ public class Server implements AutoCloseable {
                             globalContext.increaseRpcCount();
                             logout();
                             break;
+                        case "6":
+                            globalContext.increaseRpcCount();
+                            listFiles();
+                            break;
                     }
                 }
             } catch (IOException ignored) {
             } finally {
                 try {
-                    // TODO print who disconnected
                     client.close();
                 } catch (IOException ignored) {
                 }
@@ -81,6 +86,9 @@ public class Server implements AutoCloseable {
                     output.println("SERVER> Login Failed");
                 }
                 output.flush();
+            } else {
+                output.println((STATUS.FAIL.ordinal()));
+                output.println("You are already logged in.");
             }
         }
 
@@ -94,15 +102,42 @@ public class Server implements AutoCloseable {
                 output.println(STATUS.FAIL.ordinal());
                 output.println("USER> Logout failed. No user was logged in.");
             }
-            output.flush();
         }
 
         public void listFiles() {
+            if (loggedInUser == null) {
+                output.println("SERVER> You must be logged in to list files");
+                return;
+            }
 
+            File userDir = new File("storage/" + loggedInUser);
+            if (!userDir.exists() || !userDir.isDirectory()) {
+                output.println("No files found");
+                output.println("END_OF_LIST");
+                return;
+            }
+
+            String[] files = userDir.list();
+            if (files == null || files.length == 0) {
+                output.println("No files found");
+            } else {
+                for (String file : files
+                ) {
+                    output.println(file);
+                }
+            }
+            output.println("END_OF_LIST");
         }
 
         public void createFile() throws IOException {
             String response;
+
+            if (loggedInUser == null) {
+                response = "SERVER> You must be logged in to create a file";
+                output.println(response);
+                return;
+            }
+
             String fileName = input.readLine();
 
             File directory = new File("storage/" + loggedInUser);
@@ -112,13 +147,13 @@ public class Server implements AutoCloseable {
                 directory.mkdirs(); // create the directory if it doesn't exist
             }
 
-            File file = new File("storage/" + loggedInUser + "/" + fileName);
-
             try {
+                File file = new File("storage/" + loggedInUser + "/" + fileName);
                 if (file.createNewFile()) {
                     response = "File created successfully at path: " + file.getPath();
                 } else {
                     response = "File already exists: " + fileName;
+                    System.out.println(file.list());
                 }
                 output.println(response);
             } catch (IOException e) {
@@ -127,22 +162,74 @@ public class Server implements AutoCloseable {
                 output.println(response);
             }
 
-
         }
 
         public void shareFile() throws IOException {
-            // TODO
+            if (loggedInUser == null || loggedInUser.isEmpty()) {
+                output.println(STATUS.FAIL.ordinal());
+                output.println("SERVER> Must be logged in to share a file");
+                return;
+            }
+
+            String fileName = input.readLine();
+            String recipient = input.readLine();
+
+            File sourceFile = new File("storage/" + loggedInUser + "/" + fileName);
+            if (!sourceFile.exists()) {
+                output.println(STATUS.FAIL.ordinal());
+                output.println("SERVER> File does not exist.");
+                return;
+            }
+
+            File recipientDir = new File("storage/" + recipient);
+            if (!recipientDir.exists() || !recipientDir.isDirectory()) {
+                output.println(STATUS.FAIL.ordinal());
+                output.println("SERVER> Recipient does not exist.");
+                return;
+            }
+
+            File destFile = new File(recipientDir, fileName);
+            try {
+                Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                output.println(STATUS.SUCCESS.ordinal());
+                output.println("SERVER> File shared successfully.");
+            } catch (IOException e) {
+                output.println(STATUS.FAIL.ordinal());
+                output.println("SERVER> Error sharing file.");
+            }
         }
 
         public void deleteFile() throws IOException {
-            //TODO
+            String filename = input.readLine();
+            String response;
+            if (loggedInUser != null && !loggedInUser.isEmpty()) {
+                File fileToDelete = new File("storage/" + loggedInUser + "/" + filename);
+                if (fileToDelete.exists() && fileToDelete.delete()) {
+                    response = "Successfully deleted: " + filename;
+                } else {
+                    response = "Failed to delete: " + filename;
+                }
+            } else {
+                response = "You must be logged in to delete a file";
+            }
+            output.println(response);
         }
     }
 
 
     enum STATUS {
-        SUCCESS,
-        FAIL
+        SUCCESS(),
+        FAIL();
+//
+//        private final int code;
+//
+//        STATUS(int code) {
+//            this.code = code;
+//        }
+//
+//        public int getCode() {
+//            return this.code;
+//        }
     }
 
     // Global context for server
@@ -150,8 +237,8 @@ public class Server implements AutoCloseable {
         private final ThreadPoolExecutor threadPool;
         int rpcCount;
         // maybe used in future
-//        String lastUserWhoSubmittedRPC;
-//        int numberLogons;
+        String lastUserWhoSubmittedRPC;
+        int numberLogons;
 
         GlobalContext(int max_threads) {
             threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(max_threads);
@@ -162,9 +249,9 @@ public class Server implements AutoCloseable {
             rpcCount++;
         }
 
-//        synchronized void setLastUser(String user) {
-//            this.lastUserWhoSubmittedRPC = user;
-//        }
+        synchronized void setLastUser(String user) {
+            this.lastUserWhoSubmittedRPC = user;
+        }
 
     }
 
@@ -198,7 +285,7 @@ public class Server implements AutoCloseable {
 
     @Override
     public void close() {
-        System.out.println("Shutting down server"); // TODO verify if this is called
+        System.out.println("Shutting down server");
         this.globalContext.threadPool.shutdown();
     }
 

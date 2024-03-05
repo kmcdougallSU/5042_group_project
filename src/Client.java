@@ -21,11 +21,15 @@ public class Client implements AutoCloseable {
         showMenu();
     }
 
-    public void login() throws IOException {
+    public void login(int menuOption) throws IOException {
         if (loggedIn) {
             System.out.println("USER> You are already logged in.");
             return;
         }
+
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
 
         System.out.print("Welcome...\nUSER> Please enter your username: ");
         String username = scanner.nextLine();
@@ -79,37 +83,39 @@ public class Client implements AutoCloseable {
                 }
             } while (menuOption < 1 || menuOption > 6);
 
-            output.println(menuOption);
-            output.flush();
-
             switch (menuOption) {
                 case 1:
-                    login();
+                    login(menuOption);
                     break;
                 case 2:
-                    createFile();
+                    createFile(menuOption);
                     break;
                 case 3:
-                    shareFile();
+                    shareFile(menuOption);
                     break;
                 case 4:
-                    deleteFile();
+                    deleteFile(menuOption);
                     break;
                 case 5:
-                    logout();
+                    logout(menuOption);
                     break;
                 case 6:
-                    listFiles();
+                    listFiles(menuOption);
                     break;
             }
         }
     }
 
-    public void createFile() throws IOException {
+    public void createFile(int menuOption) throws IOException {
         if (!loggedIn) {
             System.out.println("USER> You must be logged in to create a file.");
             return;
         }
+
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
+
         System.out.print("USER> Enter the name of the file to create: ");
         String filename = scanner.nextLine();
         output.println(filename);
@@ -117,11 +123,15 @@ public class Client implements AutoCloseable {
         System.out.println("SERVER> " + response);
     }
 
-    public void listFiles() throws IOException {
+    public void listFiles(int menuOption) throws IOException {
         if (!loggedIn) {
             System.out.println("USER> You must be logged in to view files");
             return;
         }
+
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
 
         while (true) {
             String response = read.readLine();
@@ -131,11 +141,16 @@ public class Client implements AutoCloseable {
             System.out.println("SERVER> " + response);
         }
     }
-    public void shareFile() throws IOException {
+
+    public void shareFile(int menuOption) throws IOException {
         if (!loggedIn) {
-            System.out.println("USER> Please login");
+            System.out.println("USER> You must be logged in to share a file.");
             return;
         } else {
+            // send menuOption to tell server about this method
+            output.println(menuOption);
+            output.flush();
+
             System.out.print("USER> Enter filename to share: ");
             String sharedFile = scanner.nextLine();
             System.out.print("USER> Enter recipient username: ");
@@ -146,22 +161,25 @@ public class Client implements AutoCloseable {
             output.flush();
 
             String status = read.readLine();
+            String response = read.readLine();
             if (status.equals("0")) {
-                if ("0".equals(status)) {
-                    System.out.println("File shared successfully");
-                } else {
-                    System.out.println("Failed to share file");
-                }
+                System.out.println("USER> File shared successfully");
+            } else {
+                System.out.println("USER> Failed to share file");
             }
+            System.out.println(response);
         }
-        showMenu();
     }
 
-    public void deleteFile() throws IOException {
+    public void deleteFile(int menuOption) throws IOException {
         if (!loggedIn) {
             System.out.println("USER> You must be logged in to delete a file");
             return;
         }
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
+
         System.out.print("USER> Enter name of file to delete: ");
         String filename = scanner.nextLine();
         output.println(filename);
@@ -169,7 +187,15 @@ public class Client implements AutoCloseable {
         System.out.println("SERVER> " + response);
     }
 
-    public void logout() throws IOException {
+    public void logout(int menuOption) throws IOException {
+        if (!loggedIn) {
+            System.out.println("USER> No user is logged in.");
+            return;
+        }
+
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
 
         // Receive status from server
         String status = read.readLine();
@@ -178,9 +204,6 @@ public class Client implements AutoCloseable {
             loggedIn = false;
         }
         System.out.println(response);
-
-        // We can also exit the program here.
-        showMenu();
     }
 
     @Override

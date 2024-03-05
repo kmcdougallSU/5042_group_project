@@ -69,7 +69,8 @@ public class Server implements AutoCloseable {
         }
 
         public void login() throws IOException {
-            if (loggedInUser == null) {
+            // Client will make sure that user is not loggedIn
+//            if (loggedInUser == null) {
                 String username = input.readLine();
                 System.out.println("SERVER> username: " + username);
 
@@ -86,29 +87,31 @@ public class Server implements AutoCloseable {
                     output.println("SERVER> Login Failed");
                 }
                 output.flush();
-            } else {
-                output.println((STATUS.FAIL.ordinal()));
-                output.println("You are already logged in.");
-            }
+//            } else {
+//                output.println((STATUS.FAIL.ordinal()));
+//                output.println("You are already logged in.");
+//            }
         }
 
         public void logout() throws IOException {
-            if (loggedInUser != null && !loggedInUser.isEmpty()) {
+            // Client will make sure user is loggedIn
+//            if (loggedInUser != null && !loggedInUser.isEmpty()) {
                 output.println(STATUS.SUCCESS.ordinal());
                 output.println("USER> Logout successful. Goodbye, " + loggedInUser + "!");
                 System.out.println("SERVER> " + loggedInUser + " disconnected");
                 loggedInUser = null;
-            } else {
-                output.println(STATUS.FAIL.ordinal());
-                output.println("USER> Logout failed. No user was logged in.");
-            }
+//            } else {
+//                output.println(STATUS.FAIL.ordinal());
+//                output.println("USER> Logout failed. No user was logged in.");
+//            }
         }
 
         public void listFiles() {
-            if (loggedInUser == null) {
-                output.println("SERVER> You must be logged in to list files");
-                return;
-            }
+            // Client will make sure user is loggedIn
+//            if (loggedInUser == null) {
+//                output.println("SERVER> You must be logged in to list files");
+//                return;
+//            }
 
             File userDir = new File("storage/" + loggedInUser);
             if (!userDir.exists() || !userDir.isDirectory()) {
@@ -130,20 +133,20 @@ public class Server implements AutoCloseable {
         }
 
         public void createFile() throws IOException {
-            String response;
+            String response = "";
 
-            if (loggedInUser == null) {
-                response = "SERVER> You must be logged in to create a file";
-                output.println(response);
-                return;
-            }
+            // Client will make sure user is loggedIn
+//            if (loggedInUser == null) {
+//                response = "SERVER> You must be logged in to create a file";
+//                output.println(response);
+//                return;
+//            }
 
             String fileName = input.readLine();
 
             File directory = new File("storage/" + loggedInUser);
             if (!directory.exists()) {
-                response = "no directory found, creating new directory...";
-                output.println(response);
+                System.out.println("SERVER> No directory found, creating new directory: " + directory.getPath());
                 directory.mkdirs(); // create the directory if it doesn't exist
             }
 
@@ -155,21 +158,23 @@ public class Server implements AutoCloseable {
                     response = "File already exists: " + fileName;
                     System.out.println(file.list());
                 }
-                output.println(response);
             } catch (IOException e) {
                 response = "An error occurred while creating file: " + fileName;
                 System.err.println(response);
+            } finally {
+                // Only return 1 response for this method
                 output.println(response);
             }
 
         }
 
         public void shareFile() throws IOException {
-            if (loggedInUser == null || loggedInUser.isEmpty()) {
-                output.println(STATUS.FAIL.ordinal());
-                output.println("SERVER> Must be logged in to share a file");
-                return;
-            }
+            // Client will make sure user is loggedIn
+//            if (loggedInUser == null || loggedInUser.isEmpty()) {
+//                output.println(STATUS.FAIL.ordinal());
+//                output.println("SERVER> Must be logged in to share a file");
+//                return;
+//            }
 
             String fileName = input.readLine();
             String recipient = input.readLine();
@@ -202,16 +207,17 @@ public class Server implements AutoCloseable {
         public void deleteFile() throws IOException {
             String filename = input.readLine();
             String response;
-            if (loggedInUser != null && !loggedInUser.isEmpty()) {
+            // Client will make sure user is LoggedIn
+//            if (loggedInUser != null && !loggedInUser.isEmpty()) {
                 File fileToDelete = new File("storage/" + loggedInUser + "/" + filename);
                 if (fileToDelete.exists() && fileToDelete.delete()) {
                     response = "Successfully deleted: " + filename;
                 } else {
                     response = "Failed to delete: " + filename;
                 }
-            } else {
-                response = "You must be logged in to delete a file";
-            }
+//            } else {
+//                response = "You must be logged in to delete a file";
+//            }
             output.println(response);
         }
     }
@@ -258,7 +264,6 @@ public class Server implements AutoCloseable {
     Map<String, String> userPassword;
     ServerSocket serversocket;
     GlobalContext globalContext;
-    String loggedInUser;
     int port;
 
     public Server(int port, int max_threads) {

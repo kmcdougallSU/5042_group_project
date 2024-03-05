@@ -40,14 +40,14 @@ public class Client implements AutoCloseable {
         String status = read.readLine();
         if ("0".equals(status)) {
             loggedIn = true;
-            String response = read.readLine(); // Expecting the welcome message after the status line
+            String response = read.readLine(); 
             System.out.println(response);
 
             System.out.println("\nPress enter to continue...");
-            scanner.nextLine(); // This waits for the user to press Enter, which can pause the flow unnecessarily. Consider removing if not needed.
+            scanner.nextLine(); 
         } else {
-            String response = read.readLine(); // This reads the failure message.
-            System.out.println(response); // Show why login failed.
+            String response = read.readLine(); 
+            System.out.println(response); 
         }
     }
 

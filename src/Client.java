@@ -44,14 +44,14 @@ public class Client implements AutoCloseable {
         String status = read.readLine();
         if ("0".equals(status)) {
             loggedIn = true;
-            String response = read.readLine(); 
+            String response = read.readLine();
             System.out.println(response);
 
             System.out.println("\nPress enter to continue...");
-            scanner.nextLine(); 
+            scanner.nextLine();
         } else {
-            String response = read.readLine(); 
-            System.out.println(response); 
+            String response = read.readLine();
+            System.out.println(response);
         }
     }
 
@@ -64,7 +64,8 @@ public class Client implements AutoCloseable {
             System.out.println("3. Share File");
             System.out.println("4. Delete File");
             System.out.println("5. Logout");
-            System.out.println("6. List Files\n");
+            System.out.println("6. List Files");
+            System.out.println("7. Write to File\n");
 
             int menuOption;
             do {
@@ -78,10 +79,10 @@ public class Client implements AutoCloseable {
 
                 // After reading the int, read the new line
                 scanner.nextLine();
-                if (menuOption < 1 || menuOption > 6) {
+                if (menuOption < 1 || menuOption > 7) {
                     System.out.println("USER> Menu option is invalid.");
                 }
-            } while (menuOption < 1 || menuOption > 6);
+            } while (menuOption < 1 || menuOption > 7);
 
             switch (menuOption) {
                 case 1:
@@ -101,6 +102,9 @@ public class Client implements AutoCloseable {
                     break;
                 case 6:
                     listFiles(menuOption);
+                    break;
+                case 7:
+                    writeFile(menuOption);
                     break;
             }
         }
@@ -139,6 +143,40 @@ public class Client implements AutoCloseable {
                 break;
             }
             System.out.println("SERVER> " + response);
+        }
+    }
+
+    public void writeFile(int menuOption) {
+        if (!loggedIn) {
+            System.out.println("USER> You must be logged in to write to a file.");
+            return;
+        }
+
+        // send menuOption to tell server about this method
+        output.println(menuOption);
+        output.flush();
+
+        try {
+            System.out.print("USER> Enter the name of the file you want to write to: ");
+            String filename = scanner.nextLine(); // Get the filename from the user
+
+            System.out.println("USER> Enter the content you want to write to the file (end with an empty line): ");
+            StringBuilder contentBuilder = new StringBuilder();
+            String line;
+            while (!(line = scanner.nextLine()).isEmpty()) {
+                contentBuilder.append(line).append("\n");
+            }
+            String content = contentBuilder.toString();
+
+            output.println(filename);
+            output.println(content);
+            output.println("END_OF_CONTENT");
+
+
+            String response = read.readLine();
+            System.out.println("SERVER> " + response);
+        } catch (IOException e) {
+            System.out.println("An error occurred while trying to write to the file: " + e.getMessage());
         }
     }
 

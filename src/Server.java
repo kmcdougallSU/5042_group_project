@@ -58,6 +58,10 @@ public class Server implements AutoCloseable {
                             globalContext.increaseRpcCount();
                             listFiles();
                             break;
+                        case "7":
+                            globalContext.increaseRpcCount();
+                            writeFile();
+                            break;
                     }
                 }
             } catch (IOException ignored) {
@@ -70,29 +74,29 @@ public class Server implements AutoCloseable {
         }
 
         public void login() throws IOException {
-                String username = input.readLine();
-                System.out.println("SERVER> username: " + username);
+            String username = input.readLine();
+            System.out.println("SERVER> username: " + username);
 
-                String password = input.readLine();
-                System.out.println("SERVER> password: " + password);
+            String password = input.readLine();
+            System.out.println("SERVER> password: " + password);
 
-                if (userPassword.containsKey(username) && password.equals(userPassword.get(username))) {
-                    output.println(STATUS.SUCCESS.ordinal());
-                    output.println("SERVER> Welcome, " + username);
-                    loggedInUser = username;
-                    System.out.println("SERVER> " + loggedInUser + " connected on socket port: " + client.getPort());
-                } else {
-                    output.println(STATUS.FAIL.ordinal());
-                    output.println("SERVER> Login Failed");
-                }
-                output.flush();
+            if (userPassword.containsKey(username) && password.equals(userPassword.get(username))) {
+                output.println(STATUS.SUCCESS.ordinal());
+                output.println("SERVER> Welcome, " + username);
+                loggedInUser = username;
+                System.out.println("SERVER> " + loggedInUser + " connected on socket port: " + client.getPort());
+            } else {
+                output.println(STATUS.FAIL.ordinal());
+                output.println("SERVER> Login Failed");
+            }
+            output.flush();
         }
 
         public void logout() throws IOException {
-                output.println(STATUS.SUCCESS.ordinal());
-                output.println("USER> Logout successful. Goodbye, " + loggedInUser + "!");
-                System.out.println("SERVER> " + loggedInUser + " disconnected");
-                loggedInUser = null;
+            output.println(STATUS.SUCCESS.ordinal());
+            output.println("USER> Logout successful. Goodbye, " + loggedInUser + "!");
+            System.out.println("SERVER> " + loggedInUser + " disconnected");
+            loggedInUser = null;
         }
 
         public void listFiles() {
@@ -140,7 +144,24 @@ public class Server implements AutoCloseable {
                 // Only return 1 response for this method
                 output.println(response);
             }
+        }
 
+        public void writeFile() throws IOException {
+            String fileName = input.readLine();
+            StringBuilder contentBuilder = new StringBuilder();
+            String line;
+            while (!(line = input.readLine()).equals("END_OF_CONTENT")) {
+                contentBuilder.append(line).append("\n");
+            }
+            String content = contentBuilder.toString();
+
+            File file = new File("storage/" + loggedInUser + "/" + fileName);
+            try (FileWriter writer = new FileWriter(file, true)) { // false to overwrite
+                writer.write(content);
+                output.println("File updated successfully.");
+            } catch (IOException e) {
+                output.println("Failed to update file.");
+            }
         }
 
         public void shareFile() throws IOException {
@@ -165,7 +186,9 @@ public class Server implements AutoCloseable {
             try {
                 Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 output.println(STATUS.SUCCESS.ordinal());
+                System.out.println();
                 output.println("SERVER> File shared successfully.");
+                System.out.println("SERVER> File: \"" + fileName + "\" shared \nfrom: " + loggedInUser + "\nto: " + recipient + "\nat: " + recipientDir);
             } catch (IOException e) {
                 output.println(STATUS.FAIL.ordinal());
                 output.println("SERVER> Error sharing file.");
@@ -175,20 +198,19 @@ public class Server implements AutoCloseable {
         public void deleteFile() throws IOException {
             String filename = input.readLine();
             String response;
-                File fileToDelete = new File("storage/" + loggedInUser + "/" + filename);
-                if (fileToDelete.exists() && fileToDelete.delete()) {
-                    response = "Successfully deleted: " + filename;
-                } else {
-                    response = "Failed to delete: " + filename;
-                }
+            File fileToDelete = new File("storage/" + loggedInUser + "/" + filename);
+            if (fileToDelete.exists() && fileToDelete.delete()) {
+                response = "Successfully deleted: " + filename;
+            } else {
+                response = "Failed to delete: " + filename;
+            }
             output.println(response);
         }
     }
 
-
     enum STATUS {
         SUCCESS(),
-        FAIL();
+        FAIL()
     }
 
     // Global context for server

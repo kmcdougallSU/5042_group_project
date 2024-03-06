@@ -203,7 +203,7 @@ public class Client implements AutoCloseable {
         if (status.equals("0")) {
             loggedIn = false;
         }
-        System.out.println(response);
+        System.out.println("SERVER> " + response);
     }
 
     @Override

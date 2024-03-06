@@ -3,6 +3,7 @@ package src;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -69,8 +70,6 @@ public class Server implements AutoCloseable {
         }
 
         public void login() throws IOException {
-            // Client will make sure that user is not loggedIn
-//            if (loggedInUser == null) {
                 String username = input.readLine();
                 System.out.println("SERVER> username: " + username);
 
@@ -87,32 +86,16 @@ public class Server implements AutoCloseable {
                     output.println("SERVER> Login Failed");
                 }
                 output.flush();
-//            } else {
-//                output.println((STATUS.FAIL.ordinal()));
-//                output.println("You are already logged in.");
-//            }
         }
 
         public void logout() throws IOException {
-            // Client will make sure user is loggedIn
-//            if (loggedInUser != null && !loggedInUser.isEmpty()) {
                 output.println(STATUS.SUCCESS.ordinal());
                 output.println("USER> Logout successful. Goodbye, " + loggedInUser + "!");
                 System.out.println("SERVER> " + loggedInUser + " disconnected");
                 loggedInUser = null;
-//            } else {
-//                output.println(STATUS.FAIL.ordinal());
-//                output.println("USER> Logout failed. No user was logged in.");
-//            }
         }
 
         public void listFiles() {
-            // Client will make sure user is loggedIn
-//            if (loggedInUser == null) {
-//                output.println("SERVER> You must be logged in to list files");
-//                return;
-//            }
-
             File userDir = new File("storage/" + loggedInUser);
             if (!userDir.exists() || !userDir.isDirectory()) {
                 output.println("No files found");
@@ -134,14 +117,6 @@ public class Server implements AutoCloseable {
 
         public void createFile() throws IOException {
             String response = "";
-
-            // Client will make sure user is loggedIn
-//            if (loggedInUser == null) {
-//                response = "SERVER> You must be logged in to create a file";
-//                output.println(response);
-//                return;
-//            }
-
             String fileName = input.readLine();
 
             File directory = new File("storage/" + loggedInUser);
@@ -156,7 +131,7 @@ public class Server implements AutoCloseable {
                     response = "File created successfully at path: " + file.getPath();
                 } else {
                     response = "File already exists: " + fileName;
-                    System.out.println(file.list());
+                    System.out.println(Arrays.toString(file.list()));
                 }
             } catch (IOException e) {
                 response = "An error occurred while creating file: " + fileName;
@@ -169,13 +144,6 @@ public class Server implements AutoCloseable {
         }
 
         public void shareFile() throws IOException {
-            // Client will make sure user is loggedIn
-//            if (loggedInUser == null || loggedInUser.isEmpty()) {
-//                output.println(STATUS.FAIL.ordinal());
-//                output.println("SERVER> Must be logged in to share a file");
-//                return;
-//            }
-
             String fileName = input.readLine();
             String recipient = input.readLine();
 
@@ -189,7 +157,7 @@ public class Server implements AutoCloseable {
             File recipientDir = new File("storage/" + recipient);
             if (!recipientDir.exists() || !recipientDir.isDirectory()) {
                 output.println(STATUS.FAIL.ordinal());
-                output.println("SERVER> Recipient does not exist.");
+                output.println("SERVER> User has not set up file sharing yet.");
                 return;
             }
 
@@ -207,17 +175,12 @@ public class Server implements AutoCloseable {
         public void deleteFile() throws IOException {
             String filename = input.readLine();
             String response;
-            // Client will make sure user is LoggedIn
-//            if (loggedInUser != null && !loggedInUser.isEmpty()) {
                 File fileToDelete = new File("storage/" + loggedInUser + "/" + filename);
                 if (fileToDelete.exists() && fileToDelete.delete()) {
                     response = "Successfully deleted: " + filename;
                 } else {
                     response = "Failed to delete: " + filename;
                 }
-//            } else {
-//                response = "You must be logged in to delete a file";
-//            }
             output.println(response);
         }
     }
@@ -226,16 +189,6 @@ public class Server implements AutoCloseable {
     enum STATUS {
         SUCCESS(),
         FAIL();
-//
-//        private final int code;
-//
-//        STATUS(int code) {
-//            this.code = code;
-//        }
-//
-//        public int getCode() {
-//            return this.code;
-//        }
     }
 
     // Global context for server

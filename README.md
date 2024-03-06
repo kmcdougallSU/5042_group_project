@@ -1,4 +1,4 @@
-# 5042_group_project: Google drive
+# 5042_group_project: File Management
 First run the server file. It would listen on 12345 port.
 <br>
 Then run the client file. It will try to connect to the port 12345 on the same machine.
